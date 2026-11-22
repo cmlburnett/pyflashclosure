@@ -11,6 +11,8 @@ class Datatable:
 		self._data = []
 
 	def __eq__(self, other):
+		"""Compare two data tables for equality with same columns and number of rows, and content of all is equal."""
+
 		if other is None: return False
 		if self.NumberColumns != other.NumberColumns: return False
 		if self.NumberRows != other.NumberRows: return False
