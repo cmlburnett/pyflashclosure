@@ -1,3 +1,12 @@
+"""
+Library that hands flash card "closures". In the Anki world these are "cloze" that I just renamed to be different.
+
+A string includes any number of {{c1::answer::hint}} bits of text where 1 can be any positive integer, though small increasing numbers makes the most sense.
+A table of data can be supplied to provided many many virtual cards from a single flash card.
+
+The key class is the FlashClosure that takes the question stem and a serialized datatable string.
+"""
+
 import json
 import re
 
@@ -185,6 +194,9 @@ class Datatable:
 		return self._data[row][col]
 
 	def GetEffectiveClosureNum(self, idx):
+		"""
+		Gets the closure number (eg, 3 in {{c3}}) for whatever effective column @idx points at.
+		"""
 		if self.NumberColumns == 0:
 			raise IndexError("No columns, cannot get by index")
 		if idx < 0:
@@ -245,7 +257,7 @@ class Datatable:
 
 class ClosureString:
 	"""
-	Class that parses and formats closures.
+	Class that parses and formats closures. The Output function accepts a datatable to supply data if desired.
 
 	Supported closures are:
 		{{c1}}
@@ -355,6 +367,7 @@ class ClosureString:
 
 	@property
 	def Text(self):
+		"""Gets the original unparsed text."""
 		return self._text
 
 	@property
@@ -398,12 +411,16 @@ class ClosureString:
 		self._answer_format = v
 
 	def Output(self, num, dt=None):
+		"""
+		Returns a tuple of (question, answer) text for the card number @num and optional Datatable @dt.
+		"""
 		if dt is None or dt.NumberCells == 0:
 			return self._output_nodatatable(num)
 		else:
 			return self._output_datatable(num, dt)
 
 	def _output_nodatatable(self, num):
+		"""Internal function to output without a Datatable."""
 		question = []
 		answer = []
 
@@ -434,6 +451,7 @@ class ClosureString:
 		return ("".join(question), "".join(answer))
 
 	def _output_datatable(self, num, dt):
+		"""Internal function to output with a Datatable."""
 		question = []
 		answer = []
 
