@@ -99,6 +99,15 @@ class Datatable:
 		else:
 			return len(self._data[0])
 
+	@property
+	def NumberCells(self):
+		return self.NumberColumns * self.NumberRows
+
+	@property
+	def NumberEffectiveCells(self):
+		numhidden = sum([int(not _) for _ in self.MakeCardsRow])
+		return (self.NumberColumns - numhidden) * self.NumberRows
+
 	def AddDataRow(self, *items):
 		"""
 		Adds a row of data. The numbers of columns must match.
