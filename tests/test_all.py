@@ -16,6 +16,13 @@ def single():
 		'datatable': None,
 	}
 
+@pytest.fixture
+def singletable():
+	return {
+		'txt': "Simple {{c1::flash::answer}} card with single closure",
+		'datatable': None,
+	}
+
 def test_simple(simple):
 	c = pyflashclosure.FlashClosure(**simple)
 	assert(c.Text == simple['txt'])

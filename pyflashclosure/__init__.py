@@ -1,4 +1,29 @@
+import json
 import re
+
+class Datatable:
+	def __init__(self):
+		self._makecards = []
+		self._data = []
+
+	@property
+	def MakeCardsRow(self):
+		return self._makecards
+
+	@classmethod
+	def loads(kls, txt):
+		return kls.loadobj( json.loads(txt) )
+	@classmethod
+	def loadobj(kls, o):
+		pass
+
+	def dumps(kls):
+		return json.dumps(self.dumpobj)
+	def dumpobj(kls):
+		ret = []
+		ret += self._makecards
+		ret += self._data
+		return ret
 
 class FlashClosure:
 	"""
