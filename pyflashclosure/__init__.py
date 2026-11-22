@@ -76,7 +76,7 @@ class Datatable:
 		"""Gets a rows of data. @idx is zero based"""
 
 		if idx < 0:
-			raise IndexError("Row %d cannot be negative")
+			raise IndexError("Row %d cannot be negative" % idx)
 		if idx >= self.NumberRows:
 			raise IndexError("Row %d (zero-based) exceeds number of rows %d" % (idx, self.NumberRows))
 
@@ -89,6 +89,72 @@ class Datatable:
 	@property
 	def GetEffectiveColumns(self):
 		return sum([int(_) for _ in self._makecardsrow])
+
+	def GetIndexedCell(self, idx):
+		"""
+		Get datarow cell content by raster index (so scans columns for each row).
+		For example GetIndexedCell(0) is [0][0] and GetIndexedCell(1) is [0][1].
+		This ignores the MakeCardsRow information; see GetEffectiveIndexedCell for ignoring those columns.
+		"""
+		if self.NumberColumns == 0:
+			raise IndexError("No columns, cannot get by index")
+		if idx < 0:
+			raise IndexError("Index %d cannot be negative" % idx)
+
+		numc = self.NumberColumns
+		numr = self.NumberRows
+
+		col = idx % numc
+		row = int(idx / numc)
+
+		if row >= numr:
+			raise IndexError("Cell index %d exceeds available data" % idx)
+
+		return self._data[row][col]
+
+	def GetEffectiveIndexedCell(self, idx):
+		"""
+		Get datarow cell content by raster index (so scans columns for each row) while ignoring MakeCardsRow columns
+		For example GetIndexedCell(0) is [0][0] and GetIndexedCell(1) is [0][2] assuming the second column is ignored.
+		"""
+		if self.NumberColumns == 0:
+			raise IndexError("No columns, cannot get by index")
+		if idx < 0:
+			raise IndexError("Index %d cannot be negative" % idx)
+
+		# Number of columns that are hidden (ie, number of Falses in MakeCardsRow
+		numhidden = sum([int(not _) for _ in self.MakeCardsRow])
+
+		# Do these once
+		numc = self.NumberColumns
+		numceff = numc - numhidden
+		numr = self.NumberRows
+
+		# Ensure there's something to get
+		if numceff == 0:
+			raise ValueError("All columns are hidden, cannot get data")
+
+		# Skip over columns where MakeCardsRow[...] is False
+		# so use a map from effective column to actual column in _data
+		colmap = {}
+		z = 0
+		for i in range(numc):
+			if self.MakeCardsRow[i]:
+				colmap[z] = i
+				z += 1
+			else:
+				# don't map this column so z is unchanged
+				pass
+
+		# column and row in the effective table when columns are ignored
+		col = idx % numceff
+		row = int(idx / numceff)
+
+		if row >= numr:
+			raise IndexError("Cell index %d exceeds available data" % idx)
+
+		# Use the column map to get the right column
+		return self._data[row][ colmap[col] ]
 
 class FlashClosure:
 	"""
