@@ -10,6 +10,16 @@ class Datatable:
 		self._makecardsrow = []
 		self._data = []
 
+	def __eq__(self, other):
+		if other is None: return False
+		if self.NumberColumns != other.NumberColumns: return False
+		if self.NumberRows != other.NumberRows: return False
+
+		if self._makecardsrow != other._makecardsrow: return False
+		if self._data != other._data: return False
+
+		return True
+
 	# ================================================================================
 	# Serialization
 
@@ -18,13 +28,38 @@ class Datatable:
 		return kls.loadobj( json.loads(txt) )
 	@classmethod
 	def loadobj(kls, o):
-		pass
+		if type(o) != list:
+			raise TypeError("Cannot load from anything but a list, got %s" % str(type(o)))
 
-	def dumps(kls):
-		return json.dumps(self.dumpobj)
-	def dumpobj(kls):
+		# Empty table
+		if len(o) == 0:
+			return kls()
+
+		for i,row in enumerate(o):
+			if type(row) != list:
+				raise TypeError("Row %d is not a list, got %s" % (i, type(row)))
+
+		for i,x in enumerate(o[0]):
+			if type(x) != bool:
+				raise TypeError("MakeCardsRow index %d is not bool, got %s" % (i,type(x)))
+		for i,row in enumerate(o[1:]):
+			for j,col in enumerate(row):
+				if type(col) != str:
+					raise TypeError("Data[%d][%d] is not str, got %s" % (i,j,type(col)))
+
+			if len(o[0]) != len(row):
+				raise ValueError("Columns mismtach with first row %d columns and row %d with %d columns" % (len(o[0]), i, len(row)))
+
+		ret = kls()
+		ret._makecardsrow = o[0]
+		ret._data = o[1:]
+		return ret
+
+	def dumps(self):
+		return json.dumps(self.dumpobj())
+	def dumpobj(self):
 		ret = []
-		ret += self._makecardsrow
+		ret.append(self._makecardsrow)
 		ret += self._data
 		return ret
 
