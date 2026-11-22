@@ -2,13 +2,16 @@ import json
 import re
 
 class Datatable:
+	"""
+	To aide in creating FlashCard closures with many virtual cards from a single card, a Datatable can be used to consolidate that data.
+	"""
+
 	def __init__(self):
-		self._makecards = []
+		self._makecardsrow = []
 		self._data = []
 
-	@property
-	def MakeCardsRow(self):
-		return self._makecards
+	# ================================================================================
+	# Serialization
 
 	@classmethod
 	def loads(kls, txt):
@@ -21,9 +24,27 @@ class Datatable:
 		return json.dumps(self.dumpobj)
 	def dumpobj(kls):
 		ret = []
-		ret += self._makecards
+		ret += self._makecardsrow
 		ret += self._data
 		return ret
+
+	# ================================================================================
+	# MakeCards row
+
+	@property
+	def MakeCardsRow(self):
+		return self._makecardsrow
+
+	def SetMakeCardsColumn(self, idx, val):
+		if idx < 0:
+			raise IndexError("Column index (%d) must be non-negative" % idx)
+		if idx >= self.NumberColumns:
+			raise IndexError("Column index %d (zero-based) exceeds number of columns %d" % (idx, self.NumberColumns))
+
+		self._makecardsrow[idx] = val
+
+	# ================================================================================
+	# Basic data properties
 
 	@property
 	def NumberRows(self):
@@ -47,6 +68,20 @@ class Datatable:
 			raise ValueError('Has %d columns and trying to add %d columns, they must match' % (self.NumberColumns, len(items)))
 
 		self._data += [list(items)]
+
+		if self.NumberRows == 1:
+			self._makecardsrow = [True] * self.NumberColumns
+
+	def GetRow(self, idx):
+		"""Gets a rows of data. @idx is zero based"""
+
+		if idx < 0:
+			raise IndexError("Row %d cannot be negative")
+		if idx >= self.NumberRows:
+			raise IndexError("Row %d (zero-based) exceeds number of rows %d" % (idx, self.NumberRows))
+
+		# Copy data
+		return list(self._data[idx])
 
 class FlashClosure:
 	"""
