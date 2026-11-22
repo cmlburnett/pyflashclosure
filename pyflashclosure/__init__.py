@@ -46,10 +46,17 @@ class FlashClosure:
 
 	@property
 	def Text(self):
+		"""
+		The supplied text to parse for closures.
+		Check HasClsoures property to determine if this text has any closures in it.
+		"""
 		return self._text
 
 	@property
 	def HasClsoures(self):
+		"""
+		If the text has no closures then this returns False, otherwise if it does then True.
+		"""
 		return len(self.numbers) != 0
 
 	@property
