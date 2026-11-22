@@ -1,0 +1,6 @@
+dist
+pyflashclosure.egg-info
+__pycache__
+*.swp
+*.swo
+build

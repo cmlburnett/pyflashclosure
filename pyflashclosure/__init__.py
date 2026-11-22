@@ -1,0 +1,224 @@
+
+class FlashClosure:
+	"""
+	For a flash card, a closure is a sort of "fill in the blank" style of cards.
+	This is indicated in the card text with {{c1::answer::hint}} where 1 is any integer.
+	The question slide will show "[...] (hint)" if it's the active closure otherwise it will just show "ansewr" for other closures.
+	Thus, if a card has c1, c2, and c3 then it will create three cards where c1 is being studied while c2 and c3 are shown as answers.
+
+	Additionally, a datatable can be provided that allows permutting the cards through each row of the table.
+	For example, if a card has {{c1}} and {{c2}} and 4 rows in the table then this one card will produce 8 studyable cards.
+
+	The output is in wiki and so must be ran through the wiki.wikitohtml() function to convert that wiki to HTML.
+	"""
+
+	# This matches {{c1::answer}} and {{c1::answer::hint}}
+	REGEX = re.compile('\{\{[cC](\d+)::((?:(?!::|\}\}).)+)(?:::((?:(?!\}\}).)+))?\}\}')
+	# This matches {{c1::::hint}}
+	REGEX_NOANSWER = re.compile('\{\{[cC](\d+)::(?:::((?:(?!\}\}).)+))?\}\}')
+	# This matches {{c1}}
+	REGEX_HOLDER = re.compile('\{\{[cC](\d+)\}\}')
+
+	def __init__(self, txt, datatable):
+		# The wiki text to process
+		self.text = txt
+
+		# Process the text for all the closure statements
+		self.parts = self.Process(txt)
+
+		# Check if a datatable was provided
+		if datatable:
+			self.datatable = datatable
+		else:
+			self.datatable = None
+
+		# Now go through and find all the closure numbers used
+		self.numbers = []
+		for part in self.parts:
+			if type(part) is str: continue
+			# Get all the available closure numbers
+			if part[0] not in self.numbers:
+				self.numbers.append(part[0])
+
+		# Sort this so that [0] is the lowest closure number
+		self.numbers.sort()
+
+	@property
+	def NumberOfCards(self):
+		"""
+		Get the number of cards based on the available number of closures present and scale it by the number of rows in the datatable if one is present.
+		"""
+
+		if self.datatable:
+			# Data table present then the number of unique cards is the number of closure numbers * the number of data rows (exclude first row)
+			# For a self.numbers of (1,2) and datatable with two columns and 3 rows
+			#  num == 0: (self.numbers[0], self.datatable[1][0])
+			#  num == 1: (self.numbers[0], self.datatable[1][1])
+			#  num == 2: (self.numbers[1], self.datatable[2][0])
+			#  num == 3: (self.numbers[1], self.datatable[2][1])
+			#  num == 4: (self.numbers[2], self.datatable[3][0])
+			#  num == 5: (self.numbers[2], self.datatable[3][1])
+
+			# Exclude columns if the the "Make {{c1}} Cards" was unchecked
+			columns = 0
+			if 1 in self.numbers and self.datatable[0][0]: columns += 1
+			if 2 in self.numbers and self.datatable[0][1]: columns += 1
+			if 3 in self.numbers and self.datatable[0][2]: columns += 1
+			if 4 in self.numbers and self.datatable[0][3]: columns += 1
+			if 5 in self.numbers and self.datatable[0][4]: columns += 1
+
+			return columns * (len(self.datatable)-1)
+		else:
+			return len(self.numbers)
+
+	@classmethod
+	def Process(kls, txt):
+		"""
+		Process the text @txt for closures.
+		"""
+
+		#r = re.compile('\{\{c([0-9]+)::(.+)(?::.+)?\}\}')
+		#r = re.compile('\{\{c(\d+)::([^:{}]+)(?:::([^:{}]+))?\}\}')
+
+		# Match the closure number
+		# Match the answer that may contain a single colon or curly brace
+		# Match the optional hint that may contain a single colon or curly brace
+
+		ret = []
+
+		index = 0
+		while True:
+			# Check all three regexes and go with the first one
+			# Could optimize by using a single regex but this works and it's not that taxing and strings are usually fairly short.
+			m1 = kls.REGEX.search(txt[index:])
+			m2 = kls.REGEX_NOANSWER.search(txt[index:])
+			m3 = kls.REGEX_HOLDER.search(txt[index:])
+
+			if m1 is None and m2 is None and m3 is None:
+				# No more matches, remainder is plain text
+				ret.append( txt[index:] )
+				break
+
+			else:
+				# At least one is present
+				mn = min([_.start() for _ in (m1, m2, m3) if _ is not None])
+				if m1 is not None and mn == m1.start():
+					m = m1
+
+					# Leading plain text
+					ret.append( txt[index:index+m.start()] )
+
+					# Format is (idx,answer) or (idx,answer,hint)
+					grps = m.groups()
+					if grps[2] is not None:
+						ret.append( (int(grps[0]), grps[1], grps[2]) )
+					else:
+						ret.append( (int(grps[0]), grps[1]) )
+
+				elif m2 is not None and mn == m2.start():
+					m = m2
+
+					# Leading plain text
+					ret.append( txt[index:index+m.start()] )
+
+					# Format is (idx,hint)
+					grps = m.groups()
+					ret.append( (int(grps[0]), None, grps[1]) )
+
+				elif m3 is not None and mn == m3.start():
+					m = m3
+					# Leading plain text
+					ret.append( txt[index:index+m.start()] )
+
+					# Format is (idx,)
+					grps = m.groups()
+					ret.append( (int(grps[0]), None, None) )
+
+				else:
+					raise NotImplementedError("Shouldn't reach this point %s" % str([index, mn]))
+
+			# Move the starting index for next search
+			index += m.end()
+
+		# Clear out empty strings
+		ret = [_ for _ in ret if (type(_) is str and len(_)>0) or type(_) is not str]
+		return ret
+
+	def Output(self, num):
+		"""
+		Gets card output to display as a two tuple of (question, answer) text.
+		Provided is the card number @num from zero to self.NumberOfCards
+		"""
+		question = []
+		answer = []
+
+		closureidx = closurenum = rownum = None
+
+		# Typically, the closures should benumbers from 1, 2, 3, ... but not necessary
+		# @num is zero-based
+		if self.datatable:
+			# Numbering starts with first closure number then the data row then second closure number and second data row
+			# For a self.numbers of (1,2) and datatable with two columns and 3 rows
+			#  num == 0: (self.numbers[0], self.datatable[1][0]) closure number = (0 / 2)+1 == 1 and row number = 0 % 2 == 0
+			#  num == 1: (self.numbers[0], self.datatable[1][1]) closure number = (1 / 2)+1 == 1 and row number = 1 % 2 == 1
+			#  num == 2: (self.numbers[1], self.datatable[2][0]) closure number = (2 / 2)+1 == 2 and row number = 2 % 2 == 0
+			#  num == 3: (self.numbers[1], self.datatable[2][1]) closure number = (3 / 2)+1 == 2 and row number = 3 % 2 == 1
+			#  num == 4: (self.numbers[2], self.datatable[3][0]) closure number = (4 / 2)+1 == 3 and row number = 4 % 2 == 0
+			#  num == 5: (self.numbers[2], self.datatable[3][1]) closure number = (5 / 2)+1 == 3 and row number = 5 % 2 == 1
+
+			# Exclude columns if the the "Make {{c1}} Cards" was unchecked
+			columns = 0
+			if 1 in self.numbers and self.datatable[0][0]: columns += 1
+			if 2 in self.numbers and self.datatable[0][1]: columns += 1
+			if 3 in self.numbers and self.datatable[0][2]: columns += 1
+			if 4 in self.numbers and self.datatable[0][3]: columns += 1
+			if 5 in self.numbers and self.datatable[0][4]: columns += 1
+
+			closureidx = num % columns
+			closurenum = self.numbers[ closureidx ]
+			rownum = int(num / columns)+1
+		else:
+			# No data table so it's just the closure number
+			closurenum = self.numbers[num]
+			rownum = None
+
+		# Now with (closurenum,rownum) find the answer
+		for part in self.parts:
+			if type(part) is str:
+				question.append(part)
+				answer.append(part)
+			else:
+				# part[0] is the closure number (eg, "{{c1::x::h}}" is 1)
+				if part[0] == closurenum:
+						if len(part) == 2:
+							question.append("[...]")
+
+							if rownum is not None:
+								# Use the answer from the datatable
+								answer.append("'''" + self.datatable[rownum][closureidx] + "'''")
+							else:
+								# Use the answer from the closure definition {{c1::answer}}
+								answer.append("'''" + part[1] + "'''")
+						else:
+							question.append("[...] (''" + part[2] + "'')")
+
+							if rownum is not None:
+								# Use the answer from the datatable
+								answer.append("'''" + self.datatable[rownum][closureidx] + "'''" )
+							else:
+								# Use the answer from the closure definition {{c1::answer}}
+								answer.append("'''" + (part[1] or "") + "'''" )
+				else:
+					# Not the active closure, so just put the answer in
+					if rownum is None:
+						question.append(part[1])
+						answer.append(part[1])
+					else:
+						otherclosureidx = self.numbers.index(part[0])
+						question.append( self.datatable[rownum][otherclosureidx] )
+						answer.append( self.datatable[rownum][otherclosureidx] )
+
+		try:
+			return ("".join(question), "".join(answer))
+		except Exception as e:
+			raise ValueError([num, question, answer, str(e), [closureidx, closurenum, rownum], self.datatable])
