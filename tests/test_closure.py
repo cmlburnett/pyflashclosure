@@ -25,15 +25,23 @@ def singletable():
 
 def test_simple(simple):
 	c = pyflashclosure.FlashClosure(**simple)
+	assert(c.Closure.QuestionNoHintFormat == "[%s]")
+	assert(c.Closure.QuestionHintFormat == "[%s] (''%s'')")
+	assert(c.Closure.AnswerFormat == "'''%s'''")
+
 	assert(c.Text == simple['txt'])
-	assert(not c.HasClsoures)
+	assert(not c.HasClosures)
 	assert(c.NumberOfCards == 0)
 	assert(c.Output(0) is None)
 
 def test_single(single):
 	c = pyflashclosure.FlashClosure(**single)
+	assert(c.Closure.QuestionNoHintFormat == "[%s]")
+	assert(c.Closure.QuestionHintFormat == "[%s] (''%s'')")
+	assert(c.Closure.AnswerFormat == "'''%s'''")
+
 	assert(c.Text == single['txt'])
-	assert(c.HasClsoures)
+	assert(c.HasClosures)
 	assert(c.NumberOfCards == 1)
 	assert(c.Output(0) is not None)
 
