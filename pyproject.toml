@@ -1,3 +1,18 @@
+[project]
+name = "pyflashclosure"
+version = "1.0"
+
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --showlocals"
+
+[dependency-groups]
+dev = ["pytest"]
+

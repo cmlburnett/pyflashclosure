@@ -22,7 +22,7 @@ class FlashClosure:
 
 	def __init__(self, txt, datatable):
 		# The wiki text to process
-		self.text = txt
+		self._text = txt
 
 		# Process the text for all the closure statements
 		self.parts = self.Process(txt)
@@ -43,6 +43,24 @@ class FlashClosure:
 
 		# Sort this so that [0] is the lowest closure number
 		self.numbers.sort()
+
+	@property
+	def Text(self):
+		return self._text
+
+	@property
+	def HasClsoures(self):
+		return len(self.numbers) != 0
+
+	@property
+	def QuestionHintFormat(self):
+		return "[%s] (''%s'')"
+	@property
+	def QuestionNoHintFormat(self):
+		return "[%s]"
+	@property
+	def AnswerFormat(self):
+		return "'''%s'''"
 
 	@property
 	def NumberOfCards(self):
@@ -153,6 +171,9 @@ class FlashClosure:
 		question = []
 		answer = []
 
+		if not self.HasClsoures:
+			return None
+
 		closureidx = closurenum = rownum = None
 
 		# Typically, the closures should benumbers from 1, 2, 3, ... but not necessary
@@ -192,23 +213,23 @@ class FlashClosure:
 				# part[0] is the closure number (eg, "{{c1::x::h}}" is 1)
 				if part[0] == closurenum:
 						if len(part) == 2:
-							question.append("[...]")
+							question.append(self.QuestionNoHintFormat % "...")
 
 							if rownum is not None:
 								# Use the answer from the datatable
-								answer.append("'''" + self.datatable[rownum][closureidx] + "'''")
+								answer.append(self.AnswerFormat % self.datatable[rownum][closureidx])
 							else:
 								# Use the answer from the closure definition {{c1::answer}}
-								answer.append("'''" + part[1] + "'''")
+								answer.append(self.AnswerFormat % part[1])
 						else:
-							question.append("[...] (''" + part[2] + "'')")
+							question.append(self.QuestionHintFormat % ("...", part[2]))
 
 							if rownum is not None:
 								# Use the answer from the datatable
-								answer.append("'''" + self.datatable[rownum][closureidx] + "'''" )
+								answer.append(self.AnswerFormat % self.dattable[rownum][closureidx])
 							else:
 								# Use the answer from the closure definition {{c1::answer}}
-								answer.append("'''" + (part[1] or "") + "'''" )
+								answer.append(self.AnswerFormat % (part[1] or ""))
 				else:
 					# Not the active closure, so just put the answer in
 					if rownum is None:
@@ -223,3 +244,4 @@ class FlashClosure:
 			return ("".join(question), "".join(answer))
 		except Exception as e:
 			raise ValueError([num, question, answer, str(e), [closureidx, closurenum, rownum], self.datatable])
+
