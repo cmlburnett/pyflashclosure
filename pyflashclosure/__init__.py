@@ -77,6 +77,8 @@ class Datatable:
 			raise IndexError("Column index (%d) must be non-negative" % idx)
 		if idx >= self.NumberColumns:
 			raise IndexError("Column index %d (zero-based) exceeds number of columns %d" % (idx, self.NumberColumns))
+		if type(val) != bool:
+			raise TypeError("Column index %d (zero-based) cannot be anything but bool, got %s" % (idx, str(type(val))))
 
 		self._makecardsrow[idx] = val
 
@@ -103,6 +105,10 @@ class Datatable:
 		"""
 		if self.NumberRows != 0 and self.NumberColumns != len(items):
 			raise ValueError('Has %d columns and trying to add %d columns, they must match' % (self.NumberColumns, len(items)))
+
+		for item in items:
+			if type(item) != str:
+				raise TypeError("Cannot add non-str items")
 
 		self._data += [list(items)]
 
