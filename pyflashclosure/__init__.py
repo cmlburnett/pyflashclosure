@@ -57,8 +57,11 @@ class Datatable:
 				raise TypeError("MakeCardsRow index %d is not bool, got %s" % (i,type(x)))
 		for i,row in enumerate(o[1:]):
 			for j,col in enumerate(row):
-				if type(col) != str:
-					raise TypeError("Data[%d][%d] is not str, got %s" % (i,j,type(col)))
+				if type(col) == str or col is None:
+					# OK
+					pass
+				else:
+					raise TypeError("Data[%d][%d] is not str nor None, got %s" % (i,j,type(col)))
 
 			if len(o[0]) != len(row):
 				raise ValueError("Columns mismtach with first row %d columns and row %d with %d columns" % (len(o[0]), i, len(row)))
