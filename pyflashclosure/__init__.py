@@ -83,6 +83,13 @@ class Datatable:
 		# Copy data
 		return list(self._data[idx])
 
+	# ================================================================================
+	# Processing functions
+
+	@property
+	def GetEffectiveColumns(self):
+		return sum([int(_) for _ in self._makecardsrow])
+
 class FlashClosure:
 	"""
 	For a flash card, a closure is a sort of "fill in the blank" style of cards.
