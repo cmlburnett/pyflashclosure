@@ -54,12 +54,21 @@ class FlashClosure:
 
 	@property
 	def QuestionHintFormat(self):
+		"""
+		Format of the question with a hint. Default is to use a pybasicwiki formatting which is simple and compatible with MediaWiki formatting.
+		"""
 		return "[%s] (''%s'')"
 	@property
 	def QuestionNoHintFormat(self):
+		"""
+		Format of the question without a hint. Default is to use a pybasicwiki formatting which is simple and compatible with MediaWiki formatting.
+		"""
 		return "[%s]"
 	@property
 	def AnswerFormat(self):
+		"""
+		Format of the answer. Default is to use a pybasicwiki formatting which is simple and compatible with MediaWiki formatting.
+		"""
 		return "'''%s'''"
 
 	@property
