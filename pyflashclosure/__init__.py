@@ -181,7 +181,7 @@ class Datatable:
 		newidx = idx % numceff
 		# XXX; right now datatable is limited to a fixed c1, c2, c3, c4, c5 in that order
 		# so the column index (zero-based) is the closure number (one-based) conversion
-		return newidx + 1
+		return [idx for idx,val in enumerate(self.MakeCardsRow) if val == True][newidx] + 1
 
 	def GetEffectiveIndexedCell(self, idx):
 		"""
@@ -454,8 +454,15 @@ class ClosureString:
 					question.append(self.QuestionNoHintFormat % "...")
 					answer.append(self.AnswerFormat % cell)
 			else:
-				# Determine which cell relative to @cellclosure
-				ans = dt.GetEffectiveIndexedCell(num + (part[0] - cellclosure))
+				# Closure numbers part[0] and cellclosure need to be related in the Numbers index
+				# to determine the effective offset from @num
+				a = self.Numbers.index(part[0])
+				b = self.Numbers.index(cellclosure)
+
+				# For example, if part[0] is 3 and cellclosure is 1 (so {{c3}} and {{c1}})
+				# and Numbers is [1,3] and so EffectiveIndex needs to be one higher from num
+				# so num + 1-0 is num+1
+				ans = dt.GetEffectiveIndexedCell(num + a-b)
 				question.append(ans)
 				answer.append(ans)
 
