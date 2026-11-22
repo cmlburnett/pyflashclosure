@@ -124,3 +124,17 @@ def test_dual(dualtable):
 	with pytest.raises(ValueError):
 		out = c.Output(6)
 
+
+def test_cadiojams():
+	txt = "{{c1::Male}} is a red flag for syncope: {{c2::true::true or false}}"
+	dttxt = '[[false, true, true, true, true], ["Age > 60", "true", "", "", ""], ["Age < 60", "false", "", "", ""], ["Male", "true", "", "", ""], ["Female", "false", "", "", ""], ["Exertional syncope", "true", "", "", ""], ["Syncope upon standing", "false", "", "", ""], ["Syncope while seated", "true", "", "", ""], ["First syncope", "true", "", "", ""], ["20 years of syncope", "false", "", "", ""]]'
+
+	c = pyflashclosure.FlashClosure(txt, dttxt)
+	assert(c.Closure.Numbers == [1,2])
+	assert(c.Datatable.NumberRows == 9)
+	assert(c.Datatable.NumberColumns == 5)
+	assert(c.Datatable.NumberEffectiveColumns == 4)
+	assert(c.NumberOfCards == 9)
+	q,a = c.Output(0)
+	assert(q == "Age > 60 is a red flag for syncope: [...] (''true or false'')")
+

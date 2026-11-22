@@ -211,6 +211,33 @@ class Datatable:
 		# so the column index (zero-based) is the closure number (one-based) conversion
 		return [idx for idx,val in enumerate(self.MakeCardsRow) if val == True][newidx] + 1
 
+	def GetEffectiveIndexedCellOtherClosure(self, idx, closurenum):
+		"""
+		Get another closure in the same row as the effective index @idx.
+		"""
+		if self.NumberColumns == 0:
+			raise IndexError("No columns, cannot get by index")
+		if idx < 0:
+			raise IndexError("Index %d cannot be negative" % idx)
+
+		# Number of columns that are hidden (ie, number of Falses in MakeCardsRow
+		numhidden = sum([int(not _) for _ in self.MakeCardsRow])
+
+		# Do these once
+		numc = self.NumberColumns
+		numceff = numc - numhidden
+		numr = self.NumberRows
+
+		# Ensure there's something to get
+		if numceff == 0:
+			raise ValueError("All columns are hidden, cannot get data")
+
+		# Get the row number
+		row = int(idx / numceff)
+
+		# Columns are always, for now, c1, c2, c3, c4, etc so zero-baed index is just one less than the closure number
+		return self._data[row][closurenum-1]
+
 	def GetEffectiveIndexedCell(self, idx):
 		"""
 		Get datarow cell content by raster index (so scans columns for each row) while ignoring MakeCardsRow columns
@@ -488,15 +515,8 @@ class ClosureString:
 					question.append(self.QuestionNoHintFormat % "...")
 					answer.append(self.AnswerFormat % cell)
 			else:
-				# Closure numbers part[0] and cellclosure need to be related in the Numbers index
-				# to determine the effective offset from @num
-				a = self.Numbers.index(part[0])
-				b = self.Numbers.index(cellclosure)
-
-				# For example, if part[0] is 3 and cellclosure is 1 (so {{c3}} and {{c1}})
-				# and Numbers is [1,3] and so EffectiveIndex needs to be one higher from num
-				# so num + 1-0 is num+1
-				ans = dt.GetEffectiveIndexedCell(num + a-b)
+				# Get another cell in the same row
+				ans = dt.GetEffectiveIndexedCellOtherClosure(num, part[0])
 				question.append(ans)
 				answer.append(ans)
 
@@ -565,8 +585,12 @@ class FlashClosure:
 
 		if self.HasClosures:
 			if self._datatable.NumberRows:
+				realcols = 0
+				for n in self.Closure.Numbers:
+					if self._datatable.MakeCardsRow[n-1]:
+						realcols += 1
 				# Effective cells not total cells
-				return self._datatable.NumberRows * len(self.Closure.Numbers)
+				return self._datatable.NumberRows * realcols
 			else:
 				return len(self.Closure.Numbers)
 		else:
@@ -584,47 +608,4 @@ class FlashClosure:
 			return None
 
 		return self._text.Output(num, self._datatable)
-
-		# Now with (closurenum,rownum) find the answer
-		for part in self.parts:
-			if type(part) is str:
-				question.append(part)
-				answer.append(part)
-				continue
-
-			kk
-			# part[0] is the closure number (eg, "{{c1::x::h}}" is 1)
-			if part[0] == closurenum:
-				if len(part) == 2:
-					question.append(self.QuestionNoHintFormat % "...")
-
-					if rownum is not None:
-						# Use the answer from the datatable
-						answer.append(self.AnswerFormat % self.datatable[rownum][closureidx])
-					else:
-						# Use the answer from the closure definition {{c1::answer}}
-						answer.append(self.AnswerFormat % part[1])
-				else:
-					question.append(self.QuestionHintFormat % ("...", part[2]))
-
-					if rownum is not None:
-						# Use the answer from the datatable
-						answer.append(self.AnswerFormat % self.dattable[rownum][closureidx])
-					else:
-						# Use the answer from the closure definition {{c1::answer}}
-						answer.append(self.AnswerFormat % (part[1] or ""))
-			else:
-				# Not the active closure, so just put the answer in
-				if rownum is None:
-					question.append(part[1])
-					answer.append(part[1])
-				else:
-					otherclosureidx = self.numbers.index(part[0])
-					question.append( self.datatable[rownum][otherclosureidx] )
-					answer.append( self.datatable[rownum][otherclosureidx] )
-
-		try:
-			return ("".join(question), "".join(answer))
-		except Exception as e:
-			raise ValueError([num, question, answer, str(e), [closureidx, closurenum, rownum], self.datatable])
 
