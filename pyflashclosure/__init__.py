@@ -27,9 +27,11 @@ class Datatable:
 
 	@classmethod
 	def loads(kls, txt):
+		"""Creates Datatable object from the json dumps() output."""
 		return kls.loadobj( json.loads(txt) )
 	@classmethod
 	def loadobj(kls, o):
+		"""Creates python native object from the dumpobj() output."""
 		if type(o) != list:
 			raise TypeError("Cannot load from anything but a list, got %s" % str(type(o)))
 
@@ -58,8 +60,10 @@ class Datatable:
 		return ret
 
 	def dumps(self):
+		"""Dumps this Datatable to a json string."""
 		return json.dumps(self.dumpobj())
 	def dumpobj(self):
+		"""Dumps this Datatable to a native python object fed to json.dumps."""
 		ret = []
 		ret.append(self._makecardsrow)
 		ret += self._data
@@ -70,9 +74,14 @@ class Datatable:
 
 	@property
 	def MakeCardsRow(self):
+		"""Get the row of bool flags indicating if row should be included in making cards, or ignored if False."""
 		return self._makecardsrow
 
 	def SetMakeCardsColumn(self, idx, val):
+		"""
+		Set the flag indicating if the column @idx (zero-based) should be ignored when making cards.
+		Default is True.
+		"""
 		if idx < 0:
 			raise IndexError("Column index (%d) must be non-negative" % idx)
 		if idx >= self.NumberColumns:
@@ -101,14 +110,25 @@ class Datatable:
 
 	@property
 	def NumberEffectiveColumns(self):
+		"""Accounting for MakeCardsRow, returns number of columns actually used to generate cards."""
 		return sum([int(_) for _ in self.MakeCardsRow])
 
 	@property
 	def NumberCells(self):
+		"""
+		Returns the total number of cells present and ignores the hidden columns.
+		This has no idea what the ClosureString has in it as not all closures may be used.
+		So very possible this is larger than the number of possible closure combination.s
+		"""
 		return self.NumberColumns * self.NumberRows
 
 	@property
 	def NumberEffectiveCells(self):
+		"""
+		Returns the total number of cells present with ignoring the hidden columns.
+		This has no idea what the ClosureString has in it as not all closures may be used.
+		So very possible this is larger than the number of possible closure combination.s
+		"""
 		numhidden = sum([int(not _) for _ in self.MakeCardsRow])
 		return self.NumberEffectiveColumns * self.NumberRows
 
@@ -141,10 +161,6 @@ class Datatable:
 
 	# ================================================================================
 	# Processing functions
-
-	@property
-	def GetEffectiveColumns(self):
-		return sum([int(_) for _ in self._makecardsrow])
 
 	def GetIndexedCell(self, idx):
 		"""

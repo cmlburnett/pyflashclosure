@@ -65,11 +65,11 @@ def test_simple_datacorrect(simple):
 def test_simple_makecardscorrect(simple):
 	dt = simple['dt']
 
-	assert(dt.GetEffectiveColumns == 3)
+	assert(dt.NumberEffectiveColumns == 3)
 
 	dt.SetMakeCardsColumn(0, False)
 	assert(dt.MakeCardsRow == [False, True, True])
-	assert(dt.GetEffectiveColumns == 2)
+	assert(dt.NumberEffectiveColumns== 2)
 	assert(dt.NumberCells == 9)
 	assert(dt.NumberEffectiveCells == 6)
 	dt.SetMakeCardsColumn(0, True)
@@ -79,7 +79,7 @@ def test_simple_makecardscorrect(simple):
 
 	dt.SetMakeCardsColumn(1, False)
 	assert(dt.MakeCardsRow == [True, False, True])
-	assert(dt.GetEffectiveColumns == 2)
+	assert(dt.NumberEffectiveColumns== 2)
 	assert(dt.NumberCells == 9)
 	assert(dt.NumberEffectiveCells == 6)
 	dt.SetMakeCardsColumn(1, True)
@@ -89,7 +89,7 @@ def test_simple_makecardscorrect(simple):
 
 	dt.SetMakeCardsColumn(2, False)
 	assert(dt.MakeCardsRow == [True, True, False])
-	assert(dt.GetEffectiveColumns == 2)
+	assert(dt.NumberEffectiveColumns== 2)
 	assert(dt.NumberCells == 9)
 	assert(dt.NumberEffectiveCells == 6)
 	dt.SetMakeCardsColumn(2, True)
@@ -100,22 +100,22 @@ def test_simple_makecardscorrect(simple):
 	with pytest.raises(IndexError):
 		dt.SetMakeCardsColumn(3, True)
 
-	assert(dt.GetEffectiveColumns == 3)
+	assert(dt.NumberEffectiveColumns == 3)
 	assert(dt.NumberCells == 9)
 	assert(dt.NumberEffectiveCells == 9)
 
 	dt.SetMakeCardsColumn(0, False)
-	assert(dt.GetEffectiveColumns == 2)
+	assert(dt.NumberEffectiveColumns == 2)
 	assert(dt.NumberCells == 9)
 	assert(dt.NumberEffectiveCells == 6)
 
 	dt.SetMakeCardsColumn(1, False)
-	assert(dt.GetEffectiveColumns == 1)
+	assert(dt.NumberEffectiveColumns == 1)
 	assert(dt.NumberCells == 9)
 	assert(dt.NumberEffectiveCells == 3)
 
 	dt.SetMakeCardsColumn(2, False)
-	assert(dt.GetEffectiveColumns == 0)
+	assert(dt.NumberEffectiveColumns == 0)
 	assert(dt.NumberCells == 9)
 	assert(dt.NumberEffectiveCells == 0)
 
