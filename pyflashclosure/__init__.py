@@ -110,7 +110,7 @@ class Datatable:
 	@property
 	def NumberEffectiveCells(self):
 		numhidden = sum([int(not _) for _ in self.MakeCardsRow])
-		return (self.NumberColumns - numhidden) * self.NumberRows
+		return self.NumberEffectiveColumns * self.NumberRows
 
 	def AddDataRow(self, *items):
 		"""
@@ -222,7 +222,7 @@ class Datatable:
 		row = int(idx / numceff)
 
 		if row >= numr:
-			raise IndexError("Cell index %d exceeds available data" % idx)
+			raise ValueError("Cell index %d exceeds available data" % idx)
 
 		# Use the column map to get the right column
 		return self._data[row][ colmap[col] ]
@@ -529,9 +529,12 @@ class FlashClosure:
 		Get the number of cards based on the available number of closures present and scale it by the number of rows in the datatable if one is present.
 		"""
 
-		if self._datatable.NumberCells != 0:
-			# Effective cells not total cells
-			return self._datatable.NumberEffectiveCells
+		if self.HasClosures:
+			if self._datatable.NumberRows:
+				# Effective cells not total cells
+				return self._datatable.NumberRows * len(self.Closure.Numbers)
+			else:
+				return len(self.Closure.Numbers)
 		else:
 			return len(self._text.Numbers)
 
