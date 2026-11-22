@@ -25,6 +25,29 @@ class Datatable:
 		ret += self._data
 		return ret
 
+	@property
+	def NumberRows(self):
+		"""Returns the number of rows in the datatable."""
+		return len(self._data)
+
+	@property
+	def NumberColumns(self):
+		"""Returns the number of columns in the datatable. If no rows then zero."""
+
+		if len(self._data) == 0:
+			return 0
+		else:
+			return len(self._data[0])
+
+	def AddDataRow(self, *items):
+		"""
+		Adds a row of data. The numbers of columns must match.
+		"""
+		if self.NumberRows != 0 and self.NumberColumns != len(items):
+			raise ValueError('Has %d columns and trying to add %d columns, they must match' % (self.NumberColumns, len(items)))
+
+		self._data += [list(items)]
+
 class FlashClosure:
 	"""
 	For a flash card, a closure is a sort of "fill in the blank" style of cards.
